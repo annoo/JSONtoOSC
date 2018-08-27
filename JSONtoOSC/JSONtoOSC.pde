@@ -61,8 +61,9 @@ JSONObject inputLine;
 //Take the names and values out of the json
 void processIncoming () {
   try{
-      String name = inputLine.getString("n");
-      int value = inputLine.getInt("v");
+    int serialnumber = inputLine.getInt("s");  
+    String name = inputLine.getString("n");
+    int value = inputLine.getInt("v");
   }
   // if an error occurs, let's catch it display and exit.
   catch(Exception ex){
