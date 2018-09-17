@@ -43,21 +43,21 @@ import java.util.*;
 import oscP5.*;
 import netP5.*;
 
-import org.json.JSONObject;
-
 OscP5 oscP5;
 NetAddress myRemoteLocation;
 
 Serial commsPort;       // The serial port
 
+boolean messageArrived = false;
 String incoming = "", 
        incomingOSCMessage = "";
            
-final char contactCharacter = '|',
-           newLine = '\r\n';
+//final char contactCharacter = '|',
+ //         newLine = '\r\n';
 
 JSONObject inputLine;
 
+/*
 //Take the names and values out of the json
 void processIncoming () {
   try{
@@ -71,21 +71,23 @@ void processIncoming () {
     exit();
   }
 }
-
+*/
+/*
 void makeOSC() {
     OscMessage myMessage = new OscMessage("/"+ name);
     myMessage.add(value);
-    /* send the message */
     oscP5.send(myMessage, myRemoteLocation);
-  }
-}
+ }
+
 
 void translateMessage() {
   processIncoming();
   makeOSC();
 }
+*/
 
 // When we want to print to the window
+/*
 void ShowIncoming() {
   // to see incoming message, as set in the HashMap
   text("Incoming from Arduino", 20, 20);
@@ -101,7 +103,7 @@ void showOsc() {
   text(IncomingOSCMessage, 300, 200);
   IncomingOSCMessage ="";
 }
-
+*/
 
 void setup() {
   size(1000, 800);  // Stage size
@@ -122,15 +124,20 @@ void setup() {
 void draw() {
   if (messageArrived) {
     background(0);
-    translateMessage();
-    ShowIncoming();
+    //translateMessage();
+    //ShowIncoming();
     messageArrived= false;
   }
-  showOsc();
+  //showOsc();
 }
 
 void serialEvent(Serial commsPort) {
+  String incoming = commsPort.readString();
+  println("incoming string:", incoming);
+  JSONObject inObj = parseJSONObject(incoming);
+  createOSCMessage(inObj);
   // read a byte from the serial port:
+  /*
   char inChar = commsPort.readChar();
   switch (inChar) {
     case contactCharacter:
@@ -146,12 +153,30 @@ void serialEvent(Serial commsPort) {
       incoming += inChar;
       break;
   }
+  */
+}
+
+void createOSCMessage(JSONObject obj) {
+  println("creating oscmessage", obj);
+  try{
+    int serialnumber = obj.getInt("s");  
+    String name = obj.getString("n");
+    int value = obj.getInt("v");
+    OscMessage myMessage = new OscMessage("/"+ name);
+    myMessage.add(value);
+    oscP5.send(myMessage, myRemoteLocation);
+  }
+  // if an error occurs, let's catch it display and exit.
+  catch(Exception ex){
+    println("Exception Message: " + ex);
+    exit();
+  }
 }
 
 /* incoming osc message are forwarded to the oscEvent method. */
 void oscEvent(OscMessage theOscMessage) {  
   float value = theOscMessage.get(0).floatValue(); // get the 1st osc argument
-
+  String IncomingOSCMessage = "";
   IncomingOSCMessage += "\n" + 
                         String.format("### received an osc message: " + 
                         " addrpattern: " + 
