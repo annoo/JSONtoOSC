@@ -33,7 +33,7 @@ final int sendPort   = 12000,
 // the portNames are here to debug as well.
 // depending on your OS this is of genre "/dev/tty..." (linux and OSx) 
 // or genre "COM..." (windows)
-final String portName = "COM6";
+final String portName = "/dev/cu.usbmodem14312";
 
 ///////////////////// END of USER PARAMETERS /////////////////////////////
 
@@ -110,9 +110,11 @@ void setup() {
   fill(255);
   background(0);
 
+  printArray(Serial.list());
   
   //printArray(Serial.list());
   commsPort = new Serial(this, portName, baudRate);
+  //commsPort.bufferUntil(125);
 
   /* start oscP5, listening for incoming messages */
   oscP5 = new OscP5(this, listenPort);
@@ -132,28 +134,44 @@ void draw() {
 }
 
 void serialEvent(Serial commsPort) {
-  String incoming = commsPort.readString();
-  println("incoming string:", incoming);
-  JSONObject inObj = parseJSONObject(incoming);
-  createOSCMessage(inObj);
-  // read a byte from the serial port:
+  //String incoming = commsPort.readString();
   /*
+   if (incoming != null) {
+    println("incoming string:", incoming);
+    //JSONObject inObj = parseJSONObject(incoming);
+    //createOSCMessage(inObj); 
+   }
+  */
+  // read a byte from the serial port:
+  //println("String", incoming);
+
   char inChar = commsPort.readChar();
   switch (inChar) {
-    case contactCharacter:
-      commsPort.write(contactCharacter);       // ask for more
+    case '{':
+      incoming = "{";
       println("starting...");
       break;
-    case newLine:
-      JSONObject inputLine = parseJSONObject(incoming);
+    case '}':
+      incoming += '}';
+      println("String", incoming);
+      try {
+      JSONObject inObj = parseJSONObject(incoming);
+        if (inObj == null) {
+          println("Object could not be parsed");
+        } else {
+          println("Object could be parsed");
+          createOSCMessage(inObj); 
+        }
+      } catch (e) {
+        println("Error parsing:");
+        e.printStackTrace();
+      }
       incoming= "";
       break;
     default:
-      while ((
       incoming += inChar;
       break;
   }
-  */
 }
 
 void createOSCMessage(JSONObject obj) {
