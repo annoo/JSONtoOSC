@@ -27,7 +27,7 @@ final String remoteIP = "127.0.0.1";
 // This is the port Processing sends to and the other program listens to.
 
 final int sendPort   = 12000, 
-          listenPort = 12020;
+          listenPort = 12000;
 // The listenPort here is to actively debug.
 
 // the portNames are here to debug as well.
@@ -71,14 +71,6 @@ void processIncoming () {
     exit();
   }
 }
-*/
-/*
-void makeOSC() {
-    OscMessage myMessage = new OscMessage("/"+ name);
-    myMessage.add(value);
-    oscP5.send(myMessage, myRemoteLocation);
- }
-
 
 void translateMessage() {
   processIncoming();
@@ -134,35 +126,21 @@ void draw() {
 }
 
 void serialEvent(Serial commsPort) {
-  //String incoming = commsPort.readString();
-  /*
-   if (incoming != null) {
-    println("incoming string:", incoming);
-    //JSONObject inObj = parseJSONObject(incoming);
-    //createOSCMessage(inObj); 
-   }
-  */
-  // read a byte from the serial port:
-  //println("String", incoming);
-
   char inChar = commsPort.readChar();
   switch (inChar) {
     case '{':
       incoming = "{";
-      println("starting...");
       break;
     case '}':
       incoming += '}';
-      println("String", incoming);
       try {
       JSONObject inObj = parseJSONObject(incoming);
         if (inObj == null) {
           println("Object could not be parsed");
         } else {
-          println("Object could be parsed");
           createOSCMessage(inObj); 
         }
-      } catch (e) {
+      } catch (Exception e) {
         println("Error parsing:");
         e.printStackTrace();
       }
@@ -175,23 +153,28 @@ void serialEvent(Serial commsPort) {
 }
 
 void createOSCMessage(JSONObject obj) {
-  println("creating oscmessage", obj);
+  //println("creating oscmessage", obj);
+  //optional: check if you're receiving the expected standard
+  if(!obj.isNull("s") && !obj.isNull("n") && !obj.isNull("v")) {
   try{
-    int serialnumber = obj.getInt("s");  
-    String name = obj.getString("n");
-    int value = obj.getInt("v");
-    OscMessage myMessage = new OscMessage("/"+ name);
-    myMessage.add(value);
-    oscP5.send(myMessage, myRemoteLocation);
-  }
-  // if an error occurs, let's catch it display and exit.
-  catch(Exception ex){
-    println("Exception Message: " + ex);
-    exit();
+      int serialnumber = obj.getInt("s");  
+      String name = obj.getString("n");
+      int value = obj.getInt("v");
+      OscMessage myMessage = new OscMessage("/"+ name);
+      myMessage.add(value);
+      oscP5.send(myMessage, myRemoteLocation);
+    }
+    // if an error occurs, let's catch it display and exit.
+    catch(Exception ex){
+      println("Exception Message 1: " + ex);
+      //don't exit, because while starting up the first event can be 'valid' json, but still be invalid
+      //exit();
+    }
   }
 }
 
 /* incoming osc message are forwarded to the oscEvent method. */
+/*
 void oscEvent(OscMessage theOscMessage) {  
   float value = theOscMessage.get(0).floatValue(); // get the 1st osc argument
   String IncomingOSCMessage = "";
@@ -202,4 +185,22 @@ void oscEvent(OscMessage theOscMessage) {
                         " :  %f", 
                         value);
   println(IncomingOSCMessage);
+}
+*/
+
+/* incoming osc message are forwarded to the oscEvent method. */
+void oscEvent(OscMessage theOscMessage) {
+  /* print the address pattern and the typetag of the received OscMessage */
+  print("### received an osc message.");
+  print(" addrpattern: "+theOscMessage.addrPattern());
+  println(" typetag: "+theOscMessage.typetag());
+}
+
+//just for test  
+void mousePressed() {
+  /* in the following different ways of creating osc messages are shown by example */
+  OscMessage myMessage = new OscMessage("/test");
+  myMessage.add(123); /* add an int to the osc message */
+  /* send the message */
+  oscP5.send(myMessage, myRemoteLocation); 
 }
